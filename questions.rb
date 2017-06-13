@@ -15,7 +15,7 @@ class User
   attr_accessor :id, :fname, :lname
 
   def self.find_by_id(id)
-    user = QuestionsDatabase.instance.execute(<<-SQL, id)
+    rows = QuestionsDatabase.instance.execute(<<-SQL, id)
       SELECT
         *
       FROM
@@ -23,12 +23,13 @@ class User
       WHERE
         id = ?
     SQL
+    return nil unless rows.length > 0
 
-    User.new(user.first)
+    User.new(rows.first)
   end
 
   def self.find_by_name(fname, lname)
-    user = QuestionsDatabase.instance.execute(<<-SQL, fname, lname)
+    rows = QuestionsDatabase.instance.execute(<<-SQL, fname, lname)
       SELECT
         *
       FROM
@@ -36,8 +37,9 @@ class User
       WHERE
         fname = ? AND lname = ?
     SQL
+    return nil unless rows.length > 0
 
-    User.new(user.first)
+    User.new(rows.first)
   end
 
   def initialize(options)
@@ -48,6 +50,10 @@ class User
 
   def authored_questions
     Question.find_by_author_id(@id)
+  end
+
+  def authored_replies
+    Reply.find_by_user_id(@id)
   end
 end
 
@@ -64,6 +70,7 @@ class Question
       WHERE
         id = ?
     SQL
+    return nil unless rows.length > 0
 
     Question.new(rows.first)
   end
@@ -77,6 +84,7 @@ class Question
       WHERE
         user_id = ?
     SQL
+    return nil unless rows.length > 0
 
     rows.map { |row| Question.new(row) }
   end
@@ -86,6 +94,14 @@ class Question
     @title = options['title']
     @body = options['body']
     @user_id = options['user_id']
+  end
+
+  def author
+    User.find_by_id(@user_id)
+  end
+
+  def replies
+    Reply.find_by_question_id(@id)
   end
 end
 
@@ -102,6 +118,7 @@ class Reply
       WHERE
         id = ?
     SQL
+    return nil unless rows.length > 0
 
     Reply.new(rows.first)
   end
@@ -115,6 +132,7 @@ class Reply
       WHERE
         user_id = ?
     SQL
+    return nil unless rows.length > 0
 
     rows.map { |row| Reply.new(row) }
   end
@@ -128,6 +146,7 @@ class Reply
       WHERE
         question_id = ?
     SQL
+    return nil unless rows.length > 0
 
     rows.map { |row| Reply.new(row) }
   end
@@ -138,5 +157,31 @@ class Reply
     @parent_id = options['parent_id']
     @user_id = options['user_id']
     @body = options['body']
+  end
+
+  def author
+    User.find_by_id(@user_id)
+  end
+
+  def question
+    Question.find_by_id(@question_id)
+  end
+
+  def parent_reply
+    Reply.find_by_id(@parent_id)
+  end
+
+  def child_replies
+    rows = QuestionsDatabase.instance.execute(<<-SQL, @id)
+      SELECT
+        *
+      FROM
+        replies
+      WHERE
+        parent_id = ?
+    SQL
+    return nil unless rows.length > 0
+
+    rows.map { |row| Reply.new(row) }
   end
 end
