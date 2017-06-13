@@ -59,7 +59,9 @@ INSERT INTO
   users (fname, lname)
 VALUES
   ("Adam", "Jacobson"),
-  ("Atom", "Crimi");
+  ("Atom", "Crimi"),
+  ("Jane", "Doe"),
+  ("John", "Doe");
 
 INSERT INTO
   questions (title, body, user_id)
@@ -69,6 +71,12 @@ VALUES
   ),
   ("Hunting tips for HR students", "Bows vs guns?",
     (SELECT id FROM users WHERE fname = "Adam")
+  ),
+  ("How do you make a million dollars the object oriented way?", "Inherit it!",
+    (SELECT id FROM users WHERE fname = "Adam")
+  ),
+  ("How I mine for fish?", "Spare change for noob?",
+    (SELECT id FROM users WHERE fname = "Atom")
   );
 
 INSERT INTO
@@ -82,10 +90,16 @@ INSERT INTO
   question_follows (user_id, question_id)
 VALUES
   (1, 1),
-  (2, 2);
+  (3, 1),
+  (4, 1),
+  (2, 2),
+  (4, 2);
 
 INSERT INTO
   question_likes (user_id, question_id)
 VALUES
   (1, 1),
-  (2, 2);
+  (3, 1),
+  (4, 1),
+  (2, 2),
+  (3, 2);
