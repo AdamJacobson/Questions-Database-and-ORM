@@ -31,7 +31,7 @@ CREATE TABLE question_follows (
 DROP TABLE IF EXISTS replies;
 CREATE TABLE replies (
   id INTEGER PRIMARY KEY,
-  
+
   question_id INTEGER NOT NULL,
   parent_id INTEGER,
   user_id INTEGER NOT NULL,
