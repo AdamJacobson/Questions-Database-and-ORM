@@ -1,32 +1,56 @@
+DROP TABLE IF EXISTS users;
 CREATE TABLE users (
-  user_id serial PRIMARY KEY,
-  fname varchar (50) NOT NULL,
-  lname varchar (50) NOT NUll
+  id INTEGER PRIMARY KEY,
+
+  fname VARCHAR(255) NOT NULL,
+  lname VARCHAR(255) NOT NUll
 );
 
+DROP TABLE IF EXISTS questions;
 CREATE TABLE questions (
-  question_id serial PRIMARY KEY,
-  title varchar (140) NOT NULL,
-  body text NOT NULL,
-  user_id integer REFERENCES users(user_id) NOT NULL
-);
+  id INTEGER PRIMARY KEY,
 
-CREATE TABLE question_follows (
-  user_id integer REFERENCES users(user_id) NOT NULL,
-  question_id integer REFERENCES questions(question_id) NOT NULL
-);
-
-CREATE TABLE replies (
-  reply_id serial PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
   body TEXT NOT NULL,
-  question_id INTEGER REFERENCES questions(question_id) NOT NULL,
-  parent_id INTEGER REFERENCES replies(reply_id),
-  user_id INTEGER REFERENCES users(user_id)
+  user_id INTEGER NOT NULL,
+
+  FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+DROP TABLE IF EXISTS question_follows;
+CREATE TABLE question_follows (
+  id INTEGER PRIMARY KEY,
+
+  user_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,
+
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (question_id) REFERENCES questions(id)
+);
+
+DROP TABLE IF EXISTS replies;
+CREATE TABLE replies (
+  id INTEGER PRIMARY KEY,
+  
+  question_id INTEGER NOT NULL,
+  parent_id INTEGER,
+  user_id INTEGER NOT NULL,
+  body TEXT NOT NULL,
+
+  FOREIGN KEY (question_id) REFERENCES questions(id),
+  FOREIGN KEY (parent_id) REFERENCES replies(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+DROP TABLE IF EXISTS question_likes;
 CREATE TABLE question_likes (
-  user_id INTEGER REFERENCES users(user_id) NOT NULL,
-  question_id INTEGER REFERENCES questions(question_id) NOT NULL
+  id INTEGER PRIMARY KEY,
+
+  user_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,
+
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (question_id) REFERENCES questions(id)
 );
 
 -- SEED DATA
@@ -38,20 +62,21 @@ VALUES
   ("Atom", "Crimi");
 
 INSERT INTO
-  questions(title, body, user_id)
+  questions (title, body, user_id)
 VALUES
   ("Are we killing hack reactor students?", "^^^^^",
-    SELECT user_id FROM users WHERE fname = "Atom"
+    (SELECT id FROM users WHERE fname = "Atom")
   ),
   ("Hunting tips for HR students", "Bows vs guns?",
-    SELECT user_id FROM users WHERE fname = "Adam"
+    (SELECT id FROM users WHERE fname = "Adam")
   );
 
 INSERT INTO
-  replies (body, question_id, user_id)
+  replies (body, question_id, parent_id, user_id)
 VALUES
-  ("No", 1, 1),
-  ("Bows", 2, 2);
+  ("No", 1, NULL, 1),
+  ("Bows", 2, NULL, 2),
+  ("LOL", 2, 2, 2);
 
 INSERT INTO
   question_follows (user_id, question_id)
