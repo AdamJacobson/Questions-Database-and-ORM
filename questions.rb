@@ -93,6 +93,10 @@ class Question
     rows.map { |row| Question.new(row) }
   end
 
+  def self.most_followed(n)
+    QuestionFollow.most_followed_question(n)
+  end
+
   def initialize(options)
     @id = options['id']
     @title = options['title']
@@ -111,7 +115,6 @@ class Question
   def followers
     QuestionFollow.followers_for_question(@id)
   end
-
 end
 
 
@@ -195,6 +198,54 @@ class Reply
   end
 end
 
+class QuestionLike
+
+  def self.likers_for_question_id(question_id)
+    rows = QuestionsDatabase.instance.execute(<<-SQL, question_id)
+      SELECT
+        user_id
+      FROM
+        question_likes
+      WHERE
+        question_id = ?
+    SQL
+    return nil if rows.empty?
+
+    rows.map { |row| User.find_by_id(row['user_id']) }
+  end
+
+  def self.num_likes_for_question_id(question_id)
+    # QuestionLike.likers_for_question_id(question_id).length
+    rows = QuestionsDatabase.instance.execute(<<-SQL, question_id)
+      SELECT
+        COUNT(user_id) AS num
+      FROM
+        question_likes
+      WHERE
+        question_id = ?
+    SQL
+    return nil if rows.empty?
+
+    rows.first['num']
+  end
+
+  # questions of user that have been liked
+  # or questions that the user has liked
+  def self.liked_questions_for_user_id(user_id)
+    rows = QuestionsDatabase.instance.execute(<<-SQL, user_id)
+      SELECT
+        question_id
+      FROM
+        question_likes
+      WHERE
+        user_id = ?
+    SQL
+    return nil if rows.empty?
+
+    rows.map { |row| Question.find_by_id(row['question_id']) }
+  end
+
+end
 
 class QuestionFollow
   def self.followers_for_question(question_id)
@@ -231,5 +282,21 @@ class QuestionFollow
     return nil if rows.empty?
 
     rows.map { |row| Question.new(row) }
+  end
+
+  def self.most_followed_question(n)
+    rows = QuestionsDatabase.instance.execute(<<-SQL, n)
+      SELECT
+        question_id
+      FROM
+        question_follows
+      GROUP BY
+        question_id
+      ORDER BY
+        COUNT(user_id) DESC LIMIT ?
+    SQL
+    return nil if rows.empty?
+
+    rows.map { |row| Question.find_by_id(row['question_id']) }
   end
 end
